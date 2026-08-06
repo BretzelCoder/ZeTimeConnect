@@ -1,0 +1,4 @@
+# Seule dependance du projet.
+# Valide avec bleak 3.0.2 sous Windows 11 (Python 3.14).
+# Tkinter, utilise par zetime_gui.py, est livre avec Python sous Windows.
+bleak>=0.22

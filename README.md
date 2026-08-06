@@ -55,11 +55,64 @@ passer par la calibration de la montre ou de l'app myKronoz.
 
 ## Installation
 
-Windows 10/11, Python 3.9 ou plus récent, une puce Bluetooth LE.
+Prérequis : Windows 10/11, Python 3.9 ou plus récent, une puce Bluetooth LE
+activée. Vérifiez Python et l'accès au Bluetooth avant d'aller plus loin :
 
 ```
-pip install bleak
+python --version
 ```
+
+Si la commande est inconnue, installez Python depuis
+[python.org](https://www.python.org/downloads/windows/) en cochant *Add python.exe
+to PATH*. Côté Bluetooth, *Paramètres → Bluetooth et appareils* doit afficher un
+adaptateur actif ; sans lui, aucune commande de ce projet ne fonctionnera.
+
+Récupérez le dépôt et installez la dépendance, de préférence dans un
+environnement virtuel pour ne rien ajouter au Python du système :
+
+```
+git clone https://github.com/BretzelCoder/ZeTimeConnect.git
+cd ZeTimeConnect
+
+python -m venv .venv
+.venv\Scripts\activate
+
+pip install -r requirements.txt
+```
+
+`requirements.txt` ne contient qu'une ligne, `bleak` ; Tkinter, dont dépend
+l'interface graphique, est déjà livré avec Python sous Windows. Un
+`pip install bleak` suffit donc si vous préférez vous passer d'environnement
+virtuel. À chaque nouvelle session de terminal, réactivez-le avec
+`.venv\Scripts\activate` avant de lancer un script.
+
+Vérifiez l'installation sans avoir besoin de la montre :
+
+```
+python test_zetime.py
+```
+
+Les 16 tests de la couche protocole doivent passer. S'ils échouent ici, le
+problème est dans l'installation, pas dans le Bluetooth.
+
+### Premier démarrage
+
+Réveillez l'écran de la montre, gardez-la à moins d'un mètre, et coupez le
+Bluetooth du téléphone s'il y est appairé (voir
+[La montre n'apparaît pas dans le scan](#la-montre-napparaît-pas-dans-le-scan)).
+
+1. **Trouver la montre.** `python zetime_ctl.py scan` — elle apparaît sous un nom
+   du type `ZeTime#12345`. Relevez son adresse.
+2. **Enregistrer son adresse.** `copy zetime.local.example zetime.local`, puis
+   remplacez-y `AA:BB:CC:DD:EE:FF` par l'adresse relevée. Les commandes n'auront
+   plus besoin de `--address`. Ce fichier est ignoré par git.
+3. **Vérifier le dialogue.** `python zetime_ctl.py discover` liste les
+   caractéristiques GATT et confirme qu'elles correspondent aux constantes du
+   script, puis `python zetime_ctl.py info` affiche le numéro de série. À faire
+   avant toute commande qui écrit sur la montre.
+
+De là, `python zetime_gui.py` ouvre l'interface graphique, ou continuez en ligne
+de commande — les deux sections suivantes détaillent l'une et l'autre.
 
 ## Interface graphique
 
@@ -233,7 +286,7 @@ dont la longueur est donnée par l'en-tête.
 python test_zetime.py
 ```
 
-12 tests de la couche protocole, sans montre : aller-retour des trames, réassemblage
+16 tests de la couche protocole, sans montre : aller-retour des trames, réassemblage
 des notifications, séparation des deux flux, filtrage par `subject`,
 resynchronisation après octets parasites. `ZeTime` y est instancié avec
 `client=None`, aucun test n'émet sur le BLE. Code de retour non nul si l'un échoue.
