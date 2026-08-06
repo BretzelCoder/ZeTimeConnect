@@ -1,0 +1,32 @@
+# Environnement complet, dependances transitives comprises, tel qu'il tournait
+# sur la machine ou les commandes de lecture et "synctime" ont ete validees :
+# Windows 11, Python 3.14.3, ZeTime de firmware 2017.
+#
+#     pip install -r requirements-lock.txt
+#
+# ATTENTION, ce fichier est specifique a Windows. Le backend BLE de bleak
+# change selon la plateforme : winrt-* ici, pyobjc-* sous macOS, dbus-fast
+# sous Linux. Sur un autre systeme, installer requirements.txt, qui laisse pip
+# resoudre le backend adapte.
+#
+# Regenerer apres une mise a jour volontaire de bleak :
+#
+#     pip install --upgrade bleak
+#     pip freeze | grep -i "bleak\|winrt\|typing_extensions"
+#
+# (un "pip freeze" nu recopierait tout l'environnement Python de la machine,
+# pytest et le reste compris -- seul l'arbre de bleak a sa place ici.)
+
+bleak==3.0.2
+
+# --- resolu par bleak, backend Windows ---
+typing_extensions==4.16.0
+winrt-runtime==3.2.1
+winrt-Windows.Devices.Bluetooth==3.2.1
+winrt-Windows.Devices.Bluetooth.Advertisement==3.2.1
+winrt-Windows.Devices.Bluetooth.GenericAttributeProfile==3.2.1
+winrt-Windows.Devices.Enumeration==3.2.1
+winrt-Windows.Devices.Radios==3.2.1
+winrt-Windows.Foundation==3.2.1
+winrt-Windows.Foundation.Collections==3.2.1
+winrt-Windows.Storage.Streams==3.2.1

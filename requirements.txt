@@ -1,4 +1,15 @@
-# Seule dependance du projet.
-# Valide avec bleak 3.0.2 sous Windows 11 (Python 3.14).
-# Tkinter, utilise par zetime_gui.py, est livre avec Python sous Windows.
-bleak>=0.22
+# Dependance directe de ZeTimeConnect, epinglee a la version reellement
+# validee sur matériel : ZeTime de 2017, Windows 11, Python 3.14.
+#
+# Installer exactement cette version :
+#
+#     pip install -r requirements.txt
+#
+# Pour rejouer l'environnement complet, dependances transitives comprises,
+# utiliser requirements-lock.txt a la place (voir la section Dependances du
+# README).
+#
+# Tkinter, utilise par zetime_gui.py, est livre avec Python sous Windows et
+# ne s'installe pas par pip.
+
+bleak==3.0.2

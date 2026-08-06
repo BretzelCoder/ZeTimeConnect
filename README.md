@@ -80,11 +80,31 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-`requirements.txt` ne contient qu'une ligne, `bleak` ; Tkinter, dont dépend
-l'interface graphique, est déjà livré avec Python sous Windows. Un
-`pip install bleak` suffit donc si vous préférez vous passer d'environnement
-virtuel. À chaque nouvelle session de terminal, réactivez-le avec
+À chaque nouvelle session de terminal, réactivez l'environnement avec
 `.venv\Scripts\activate` avant de lancer un script.
+
+### Dépendances
+
+Une seule dépendance directe, `bleak`, épinglée à la version exacte validée sur
+matériel. Tkinter, dont dépend l'interface graphique, est livré avec Python sous
+Windows et ne s'installe pas par pip.
+
+| Fichier | Contenu | Quand l'utiliser |
+|---|---|---|
+| `requirements.txt` | `bleak==3.0.2` | Cas normal. pip résout le backend BLE adapté à votre système. |
+| `requirements-lock.txt` | les 11 paquets de l'arbre complet, figés | Pour rejouer à l'identique l'environnement de validation. Windows uniquement. |
+
+L'arbre complet est dans un fichier séparé parce qu'il est **spécifique à la
+plateforme** : le backend BLE de bleak est `winrt-*` sous Windows, `pyobjc-*` sous
+macOS, `dbus-fast` sous Linux. Un lock figé sous Windows est donc ininstallable
+ailleurs, alors que `requirements.txt` laisse pip choisir.
+
+Le lock a été vérifié dans un environnement vierge : `pip install -r
+requirements-lock.txt` installe 11 paquets et rien d'autre, et `test_zetime.py`
+y passe ses 16 tests.
+
+Versions de référence : Python 3.14.3, bleak 3.0.2, Windows 11. Le plancher réel
+est Python 3.9 ; rien dans le code n'exige de syntaxe plus récente.
 
 Vérifiez l'installation sans avoir besoin de la montre :
 
