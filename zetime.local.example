@@ -1,0 +1,13 @@
+# Modele de configuration locale.
+#
+# Copiez ce fichier en "zetime.local" (sans .example) et remplacez l'adresse par
+# celle de votre montre, obtenue avec :
+#
+#     python zetime_ctl.py scan
+#
+# "zetime.local" est ignore par git : votre adresse MAC ne partira pas dans un
+# depot. Ce modele-ci, lui, est versionne -- n'y mettez pas votre vraie adresse.
+#
+# Format : "cle = valeur", un par ligne, "#" en commentaire.
+
+address = AA:BB:CC:DD:EE:FF

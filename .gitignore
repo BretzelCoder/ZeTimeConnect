@@ -1,0 +1,13 @@
+# Configuration locale : contient l'adresse MAC de VOTRE montre, qui identifie un
+# appareil physique precis. Ne doit jamais partir dans un depot.
+zetime.local
+jl.md
+
+# Reglages Claude Code propres a la machine (chemins absolus locaux)
+.claude/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
