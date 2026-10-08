@@ -189,6 +189,7 @@ class App:
         self.runner = AsyncRunner(root)
         self.session: Optional[Session] = None
         self.scan_queue: "queue.Queue[dict]" = queue.Queue()
+        self.adresse_enregistree: Optional[str] = None
         self.appareils: dict = {}
         self.dernier_brut: Optional[bytes] = None
         self.dernier_brut_nom = ""
@@ -237,14 +238,20 @@ class App:
 
         haut = ttk.Frame(cadre)
         haut.grid(row=0, column=0, sticky="ew", pady=(0, 6))
-        self.bouton_scan = ttk.Button(haut, text="Rechercher les montres",
+        ligne1 = ttk.Frame(haut)
+        ligne1.pack(fill="x")
+        self.bouton_scan = ttk.Button(ligne1, text="Rechercher les montres",
                                       command=self._scanner)
         self.bouton_scan.pack(side="left")
-        ttk.Label(haut, text="durée").pack(side="left", padx=(8, 3))
+        ttk.Label(ligne1, text="durée").pack(side="left", padx=(8, 3))
         self.duree_scan = tk.IntVar(value=20)
-        ttk.Spinbox(haut, from_=5, to=60, width=4,
+        ttk.Spinbox(ligne1, from_=5, to=60, width=4,
                     textvariable=self.duree_scan).pack(side="left")
-        ttk.Label(haut, text="s").pack(side="left", padx=(2, 0))
+        ttk.Label(ligne1, text="s").pack(side="left", padx=(2, 0))
+        self.afficher_tout = tk.BooleanVar(value=False)
+        ttk.Checkbutton(haut, text="Afficher tous les appareils BLE",
+                        variable=self.afficher_tout,
+                        command=self._rafraichir_liste).pack(anchor="w", pady=(4, 0))
 
         colonnes = ("adresse", "nom", "signal")
         self.liste = ttk.Treeview(cadre, columns=colonnes, show="headings",
@@ -443,7 +450,9 @@ class App:
         adresse = load_local_config().get("address")
         if not adresse:
             return
-        self.appareils[adresse] = {"nom": "(adresse enregistrée)", "rssi": None}
+        self.adresse_enregistree = adresse
+        self.appareils[adresse] = {"nom": "(adresse enregistrée)", "rssi": None,
+                                   "zetime": True}
         self.liste.insert("", "end", iid=adresse,
                           values=(adresse, "(adresse enregistrée)", "—"), tags=("zetime",))
         self.liste.selection_set(adresse)
@@ -490,21 +499,43 @@ class App:
             # initiale : on garde le meilleur vu jusqu'ici plutot que le dernier.
             connu["nom"] = vu["nom"] or connu["nom"]
             connu["rssi"] = vu["rssi"]
-            connu["zetime"] = connu["zetime"] or vu["zetime"]
+            connu["zetime"] = (connu["zetime"] or vu["zetime"]
+                               or adresse == self.adresse_enregistree)
 
-            valeurs = (adresse, connu["nom"] or "(sans nom diffusé)",
-                       f"{connu['rssi']} dBm" if connu["rssi"] is not None else "—")
-            tags = ("zetime",) if connu["zetime"] else ()
-            if self.liste.exists(adresse):
-                self.liste.item(adresse, values=valeurs, tags=tags)
-            else:
-                self.liste.insert("", "end", iid=adresse, values=valeurs, tags=tags)
-                if connu["zetime"]:
+            nouveau = not self.liste.exists(adresse)
+            if self._afficher(connu):
+                self._afficher_ligne(adresse, connu)
+                if nouveau and connu["zetime"]:
                     self._logger(f"ZeTime détectée : {adresse} ({connu['nom']})")
+            elif connu["zetime"] and nouveau:
+                self._logger(f"ZeTime détectée : {adresse} ({connu['nom']})")
 
         self._trier_par_signal()
         if self.occupe:
             self.root.after(300, self._vider_file_scan)
+
+    def _afficher(self, connu: dict) -> bool:
+        return bool(connu.get("zetime")) or self.afficher_tout.get()
+
+    def _afficher_ligne(self, adresse: str, connu: dict):
+        valeurs = (adresse, connu["nom"] or "(sans nom diffusé)",
+                   f"{connu['rssi']} dBm" if connu["rssi"] is not None else "—")
+        tags = ("zetime",) if connu.get("zetime") else ()
+        if self.liste.exists(adresse):
+            self.liste.item(adresse, values=valeurs, tags=tags)
+        else:
+            self.liste.insert("", "end", iid=adresse, values=valeurs, tags=tags)
+
+    def _rafraichir_liste(self):
+        """Reconstruit le tableau quand on coche/décoche « Afficher tous les appareils »."""
+        selection = self.liste.selection()
+        self.liste.delete(*self.liste.get_children())
+        for adresse, connu in self.appareils.items():
+            if self._afficher(connu):
+                self._afficher_ligne(adresse, connu)
+        self._trier_par_signal()
+        if selection and self.liste.exists(selection[0]):
+            self.liste.selection_set(selection[0])
 
     def _trier_par_signal(self):
         def force(iid):
@@ -517,9 +548,9 @@ class App:
     def _scan_fini(self, _resultat):
         self._set_occupe(False)
         self._vider_file_scan()
-        total = len(self.liste.get_children())
+        total = len(self.appareils)
         montres = sum(1 for a in self.appareils.values() if a.get("zetime"))
-        self._logger(f"Recherche terminée : {total} périphérique(s), {montres} ZeTime.")
+        self._logger(f"Recherche terminée : {total} périphérique(s) BLE vus, {montres} ZeTime.")
         if not montres:
             self._logger("Aucun nom évoquant ZeTime/Kronoz. Une montre déjà connectée "
                          "à un téléphone n'émet plus d'annonce BLE : coupez le Bluetooth "
